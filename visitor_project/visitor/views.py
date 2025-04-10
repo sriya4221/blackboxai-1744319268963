@@ -217,3 +217,33 @@ def get_host_details(request):
         except Employee.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Host not found'})
     return JsonResponse({'status': 'error'}, status=400)
+
+@csrf_exempt
+def block_visitor(request, visitor_id):
+    if request.method == 'POST':
+        visitor = get_object_or_404(Visitor, id=visitor_id)
+        
+        # Create BlockedVisitor entry
+        BlockedVisitor.objects.create(
+            name=visitor.name,
+            phone_number=visitor.phone_number,
+            email=visitor.email,
+            company=visitor.company,
+            reason="Blocked from visitor list"
+        )
+        
+        # Update visitor status
+        visitor.status = 'blocked'
+        visitor.save()
+        
+        # Send email notification to admin
+        if visitor.email:
+            send_mail(
+                subject='Visitor Blocked',
+                message=f'Visitor {visitor.name} has been blocked.',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.ADMIN_EMAIL]
+            )
+        
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error'}, status=400)
