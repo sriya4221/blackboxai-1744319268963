@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-['Inter']">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            {% if visitor.status == 'approved' %}
+                <!-- Entry Pass -->
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                    <div class="bg-blue-600 px-4 py-5 border-b border-gray-200 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg leading-6 font-medium text-white">
+                                Entry Pass
+                            </h3>
+                            <p class="text-sm text-blue-100">
+                                {{ visitor.check_in_time|date:"d M Y" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center space-x-4">
+                            {% if visitor.photo %}
+                                <img src="{{ visitor.photo }}" alt="{{ visitor.name }}" class="h-20 w-20 rounded-full">
+                            {% else %}
+                                <div class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <i class="fas fa-user text-gray-400 text-3xl"></i>
+                                </div>
+                            {% endif %}
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">{{ visitor.name }}</h4>
+                                <p class="text-sm text-gray-500">{{ visitor.company }}</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Purpose</p>
+                                <p class="mt-1 text-sm text-gray-900">{{ visitor.purpose }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Meeting With</p>
+                                <p class="mt-1 text-sm text-gray-900">{{ visitor.person_to_meet }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Scheduled Time</p>
+                                <p class="mt-1 text-sm text-gray-900">{{ visitor.scheduled_time|date:"H:i" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Status</p>
+                                <p class="mt-1 text-sm text-green-600 font-semibold">Approved</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center text-sm text-gray-600">
+                    Please show this pass at the reception
+                </div>
+            {% elif visitor.status == 'rejected' %}
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                        <i class="fas fa-times text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">Request Rejected</h3>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Sorry, your visit request has been rejected.
+                    </p>
+                </div>
+            {% elif visitor.status == 'blocked' %}
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                        <i class="fas fa-ban text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">Access Denied</h3>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Permission denied. Please contact the office for more information.
+                    </p>
+                </div>
+            {% else %}
+                <div class="text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                        <i class="fas fa-clock text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">Request Pending</h3>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Thank you for your visit request. You will be notified once it's approved.
+                    </p>
+                    <p class="mt-4 text-sm text-gray-500">
+                        Host: {{ visitor.person_to_meet }}
+                    </p>
+                </div>
+            {% endif %}
+
+            {% if visitor.status == 'approved' %}
+                <div class="mt-4">
+                    <button onclick="window.print()" class="w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-print mr-2"></i>
+                        Print Pass
+                    </button>
+                </div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{% url 'visitor_list' %}" class="w-full flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
