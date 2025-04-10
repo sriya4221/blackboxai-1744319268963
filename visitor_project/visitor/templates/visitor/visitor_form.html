@@ -1,0 +1,270 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-['Inter']">
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+                <div class="p-4 border-b">
+                    <h3 class="text-xl font-semibold">Take Photo</h3>
+                </div>
+                <div class="p-4">
+                    <video id="video" class="w-full rounded-lg" autoplay></video>
+                    <canvas id="canvas" class="hidden"></canvas>
+                    <div class="mt-4 flex justify-end space-x-3">
+                        <button onclick="closeCamera()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                            Cancel
+                        </button>
+                        <button onclick="capturePhoto()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            Capture
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+            <h2 class="text-center text-3xl font-extrabold text-gray-900">
+                Visitor Registration
+            </h2>
+        </div>
+
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                <form method="POST" class="space-y-6" id="visitorForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="photo" id="photoData">
+
+                    <!-- Photo Capture Button -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">
+                            Visitor Photo
+                        </label>
+                        <div class="mt-1 flex items-center space-x-4">
+                            <div id="photoPreview" class="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-camera text-gray-400 text-2xl"></i>
+                            </div>
+                            <button type="button" onclick="startCamera()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                Take Photo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Name -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" name="name" id="name" required
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            value="{{ initial_data.name }}">
+                    </div>
+
+                    <!-- Phone -->
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <input type="tel" name="phone" id="phone" required readonly
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 sm:text-sm"
+                            value="{{ visitor.phone_number }}">
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" name="email" id="email" required
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            value="{{ initial_data.email }}">
+                    </div>
+
+                    <!-- Company -->
+                    <div>
+                        <label for="company" class="block text-sm font-medium text-gray-700">Company</label>
+                        <select name="company" id="company" required
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Select Company</option>
+                            <option value="Wyzmindz">Wyzmindz</option>
+                            <option value="Transscon">Transscon</option>
+                            <option value="Asteya Services">Asteya Services</option>
+                            <option value="YOCOYA Technologies">YOCOYA Technologies</option>
+                        </select>
+                    </div>
+
+                    <!-- Purpose -->
+                    <div>
+                        <label for="purpose" class="block text-sm font-medium text-gray-700">Purpose of Visit</label>
+                        <select name="purpose" id="purpose" required onchange="toggleFields()"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Select Purpose</option>
+                            <option value="Work">Work</option>
+                            <option value="Interview">Interview</option>
+                            <option value="Meeting">Meeting</option>
+                            <option value="Appointment">Appointment</option>
+                            <option value="Delivery">Delivery</option>
+                            <option value="Service">Service</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+
+                    <!-- Employee ID (hidden by default) -->
+                    <div id="employeeIdField" class="hidden">
+                        <label for="employee_id" class="block text-sm font-medium text-gray-700">Employee ID</label>
+                        <input type="text" name="employee_id" id="employee_id"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            value="{{ initial_data.employee_id }}">
+                    </div>
+
+                    <!-- Person to Meet -->
+                    <div id="personToMeetField">
+                        <label for="person_to_meet" class="block text-sm font-medium text-gray-700">Person to Meet</label>
+                        <input type="text" name="person_to_meet" id="person_to_meet"
+                            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            oninput="getHostDetails(this.value)"
+                            value="Sriya">
+                    </div>
+
+                    <!-- Host Details -->
+                    <div id="hostDetailsFields" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Host Phone</label>
+                            <input type="tel" id="host_phone" name="host_phone"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 sm:text-sm"
+                                value="{{ default_host.phone }}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Host Email</label>
+                            <input type="email" id="host_email" name="host_email"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 sm:text-sm"
+                                value="{{ default_host.email }}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let videoStream;
+
+        function startCamera() {
+            document.getElementById('cameraModal').classList.remove('hidden');
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    videoStream = stream;
+                    document.getElementById('video').srcObject = stream;
+                })
+                .catch(err => {
+                    console.error("Error accessing camera:", err);
+                    alert("Unable to access camera. Please make sure you have granted camera permissions.");
+                });
+        }
+
+        function closeCamera() {
+            document.getElementById('cameraModal').classList.add('hidden');
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const preview = document.getElementById('photoPreview');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const photoData = canvas.toDataURL('image/jpeg');
+            document.getElementById('photoData').value = photoData;
+
+            preview.innerHTML = `<img src="${photoData}" class="h-24 w-24 rounded-full object-cover">`;
+
+            closeCamera();
+        }
+
+        function toggleFields() {
+            const purpose = document.getElementById('purpose').value;
+            const employeeIdField = document.getElementById('employeeIdField');
+            const personToMeetField = document.getElementById('personToMeetField');
+            const hostDetailsFields = document.getElementById('hostDetailsFields');
+
+            if (purpose === 'Work') {
+                employeeIdField.classList.remove('hidden');
+                personToMeetField.classList.add('hidden');
+                hostDetailsFields.classList.add('hidden');
+            } else {
+                employeeIdField.classList.add('hidden');
+                personToMeetField.classList.remove('hidden');
+                hostDetailsFields.classList.remove('hidden');
+                
+                // Set default host details if not already set
+                if (!document.getElementById('host_phone').value) {
+                    document.getElementById('host_phone').value = '{{ default_host.phone }}';
+                    document.getElementById('host_email').value = '{{ default_host.email }}';
+                }
+            }
+        }
+
+        let debounceTimer;
+        function getHostDetails(name) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                if (name.length < 3) return;
+
+                fetch('/visitor/get-host-details/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ name: name })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('host_phone').value = data.phone || '{{ default_host.phone }}';
+                        document.getElementById('host_email').value = data.email || '{{ default_host.email }}';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }, 500);
+        }
+
+        document.getElementById('visitorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!document.getElementById('photoData').value) {
+                alert('Please take a photo before submitting.');
+                return;
+            }
+            this.submit();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleFields();
+            if (document.getElementById('purpose').value === 'Work') {
+                document.getElementById('purpose').value = 'Work';
+                toggleFields();
+            }
+        });
+    </script>
+</body>
+</html>
