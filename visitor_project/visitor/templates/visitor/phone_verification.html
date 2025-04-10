@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visitor Check-in</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-['Inter']">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Logo and Welcome Message -->
+            <div class="text-center">
+                <img src="https://via.placeholder.com/150" alt="Suryojaswi Groups Logo" class="mx-auto h-24">
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
+                    Welcome to Suryojaswi Groups
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Bengaluru Office
+                </p>
+                <p class="text-lg font-semibold text-blue-600">
+                    Suryojaswi Namaha
+                </p>
+            </div>
+
+            <!-- Phone Verification Form -->
+            <div class="mt-8">
+                <form id="phoneForm" class="space-y-6" method="POST">
+                    {% csrf_token %}
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700">
+                            Enter your phone number
+                        </label>
+                        <div class="mt-1">
+                            <input type="tel" id="phone" name="phone" required
+                                class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                pattern="[0-9]{10}"
+                                placeholder="10-digit mobile number"
+                                inputmode="numeric"
+                                maxlength="10"
+                                autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Continue
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mt-4 text-center text-sm text-red-600">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('phoneForm');
+            const phoneInput = document.getElementById('phone');
+            const errorDiv = document.getElementById('errorMessage');
+
+            // Handle input validation
+            phoneInput.addEventListener('input', function() {
+                // Remove any non-numeric characters and limit to 10 digits
+                this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                // Hide error message when user starts typing
+                errorDiv.classList.add('hidden');
+            });
+
+            // Handle form submission
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const phone = phoneInput.value.trim();
+
+                // Basic validation
+                if (!phone || !/^\d{10}$/.test(phone)) {
+                    errorDiv.textContent = 'Please enter a valid 10-digit phone number';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // Make API call to verify phone
+                fetch('/visitor/verify-phone/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ phone: phone })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        errorDiv.textContent = data.message || 'An error occurred. Please try again.';
+                        errorDiv.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    errorDiv.textContent = 'An error occurred. Please try again.';
+                    errorDiv.classList.remove('hidden');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
